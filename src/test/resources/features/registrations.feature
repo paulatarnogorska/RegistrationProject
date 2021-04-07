@@ -3,10 +3,11 @@ Feature: Register an account
 
   Scenario Outline: Creating an account with valid and invalid data
     Given User navigates to Mailchimp website
-    And User accepts cookies
     And User enters an email "<email>"
     And User enters a username "<username>"
     And User enters a password "<password>"
+    And User accepts cookies
+    And User scrolls down
     When User clicks on the signup button
     Then The output message "<outputMessage>" should be displayed
     Examples:

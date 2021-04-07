@@ -6,8 +6,8 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import org.junit.Assert;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -16,9 +16,10 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
+
 public class StepDefinitions {
     WebDriver driver;
-    WebDriverWait wait;
 
     @Before
     public void setup() {
@@ -29,34 +30,24 @@ public class StepDefinitions {
         this.driver.manage().timeouts().pageLoadTimeout(60, TimeUnit.SECONDS);
     }
 
-   /* @After
-    public void tearDown() throws InterruptedException {
-        Thread.sleep(2000);
+    @After
+    public void tearDown() {
         this.driver.manage().deleteAllCookies();
         this.driver.quit();
-    }*/
+    }
+
 
     @Given("User navigates to Mailchimp website")
     public void user_navigates_to_mailchimp_website() {
         driver.get("https://login.mailchimp.com/signup/");
     }
 
-    @And("User accepts cookies")
-    public void user_accept_cookies() {
-        By cookies = By.id("onetrust-accept-btn-handler");
-        System.out.println("sasas");
-        wait = new WebDriverWait(driver, 10);
-        wait.until(ExpectedConditions.elementToBeClickable(cookies)).click();
-        wait.until(ExpectedConditions.invisibilityOfElementLocated(cookies));
-    }
-
     @And("User enters an email {string}")
-    public void user_enters_an_email(String email) {
+    public void user_enters_an_email(String email) throws InterruptedException {
         WebElement mail = driver.findElement(By.id("email"));
         if (email.equals("randomMail")) {
             mail.sendKeys(Methods.randomMail());
-        }
-        if (email.equals("emptyMail")) {
+        } else if (email.equals("emptyMail")) {
             mail.sendKeys(" ");
         }
     }
@@ -66,11 +57,9 @@ public class StepDefinitions {
         WebElement name = driver.findElement(By.id("new_username"));
         if (username.equals("randomUsername")) {
             name.sendKeys(Methods.randomName());
-        }
-        if (username.equals("longUsername")) {
-            name.sendKeys(Methods.longName());
-        }
-        if (username.equals("existingUsername")) {
+        } else if (username.equals("longUsername")) {
+            name.sendKeys(Methods.longUserName());
+        } else if (username.equals("existingUsername")) {
             name.sendKeys("Paula123");
         }
     }
@@ -82,21 +71,51 @@ public class StepDefinitions {
 
     }
 
+    @Given("User accepts cookies")
+    public void user_accepts_cookies() {
+        WebDriverWait wait = new WebDriverWait(driver, 10);
+        WebElement cookies = new WebDriverWait(driver, 10).
+                until(ExpectedConditions.presenceOfElementLocated(By.id("onetrust-accept-btn-handler")));
+
+        while (cookies.isDisplayed()) {
+            wait.until(ExpectedConditions.elementToBeClickable(cookies)).click();
+        }
+    }
+
+    @Given("User scrolls down")
+    public void user_scrolls_down() {
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        js.executeScript("window.scrollBy(0,1000)");
+    }
+
+
     @When("User clicks on the signup button")
     public void user_clicks_on_the_signup_button() {
-        WebElement signup = driver.findElement(By.id("create-account"));
-        WebDriverWait wait = new WebDriverWait(driver, 120);
-        wait.until(ExpectedConditions.elementToBeClickable(signup)).click();
-
+        WebElement signup = new WebDriverWait(driver, 10).
+                until(ExpectedConditions.presenceOfElementLocated(By.id("create-account")));
+        signup.click();
     }
 
     @Then("The output message {string} should be displayed")
     public void the_output_message_should_be_displayed(String outputMessage) {
 
-            /*WebElement successfulLogin = driver.findElement(By.cssSelector("h1[class='!margin-bottom--lv3 no-transform center-on-medium']"));
-            Assert.assertEquals(successfulLogin.getText(), outputMessage);*/
+        String expected = "";
+        String actual = "";
 
-        WebElement errorInvalid = driver.findElement(By.cssSelector("span[class='invalid-error']"));
-        Assert.assertEquals(outputMessage, errorInvalid.getText());
+        if(outputMessage.equals("Check your email")) {
+            expected = "Check your email";
+            actual = driver.findElement(By.cssSelector("h1[class='!margin-bottom--lv3 no-transform center-on-medium']")).getText();
+        } else if(outputMessage.equals("longUsername")) {
+            expected = "Enter a value less than 100 characters long";
+            actual = driver.findElement(By.cssSelector("span[class='invalid-error']")).getText();
+        } else if (outputMessage.equals("existingUsername")) {
+            expected = "Another user with this username already exists. Maybe it's your evil twin. Spooky.";
+            actual = driver.findElement(By.cssSelector("span[class='invalid-error']")).getText();
+        } else if(outputMessage.equals("Please enter a value")) {
+            expected = "Please enter a value";
+            actual = driver.findElement(By.cssSelector("span[class='invalid-error']")).getText();
+        }
+
+        assertEquals(expected, actual);
     }
 }
