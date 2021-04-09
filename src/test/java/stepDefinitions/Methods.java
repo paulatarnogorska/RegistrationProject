@@ -8,11 +8,12 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.util.Date;
+
 public class Methods {
+    private WebDriver driver;
 
-    public WebDriver createWebDriver(String browser) {
-        WebDriver driver = null;
-
+    public Methods(String browser) {
         if (browser.equals("chrome")) {
             System.setProperty("webdriver.chrome.driver", "C:\\Users\\paula\\Documents\\MVT20\\Testautomation\\Selenium\\chromedriver.exe");
             driver = new ChromeDriver();
@@ -20,11 +21,13 @@ public class Methods {
             System.setProperty("webdriver.gecko.driver", "C:\\Users\\paula\\Documents\\MVT20\\Testautomation\\Selenium\\geckodriver.exe");
             driver = new FirefoxDriver();
         }
+    }
 
+    public WebDriver getDriver() {
         return driver;
     }
 
-    public static void click(WebDriver driver, By by) {
+    public void click(By by) {
 
         (new WebDriverWait(driver, 10, 1000)).
                 until(ExpectedConditions.presenceOfElementLocated(by));
@@ -32,24 +35,23 @@ public class Methods {
         driver.findElement(by).click();
     }
 
-    public static void sendKeys(WebDriver driver, By by, String keys) {
+    public void sendKeys(By by, String keys) {
 
         (new WebDriverWait(driver, 10)).
                 until(ExpectedConditions.presenceOfElementLocated(by));
         driver.findElement(by).sendKeys(keys);
     }
 
-    public static String randomName() {
-        Faker faker = new Faker();
-        return faker.name().lastName() + faker.random().nextInt(100);
+    public String randomName() {
+        return "Ugalinyamachomatamusana" + new Date().getTime();
     }
 
-    public static String randomMail() {
+    public String randomMail() {
         Faker faker = new Faker();
         return faker.name().firstName() + "@test.com";
     }
 
-    public static String longUserName() {
+    public String longUserName() {
         return "bk0YeJSiuHl82m5wqIPkB1PhLG2UP9p7zEH6Aj6eehDjB0tppgwpFlzzZHytgao4VnXX0LC50yRYmdOR9dJGF1fFnKhje5l7ISqW123";
     }
 }

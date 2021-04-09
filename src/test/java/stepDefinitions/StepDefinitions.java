@@ -19,11 +19,12 @@ import static org.junit.Assert.assertEquals;
 
 public class StepDefinitions {
     WebDriver driver;
+    Methods creator = null;
 
     @Before
     public void setup() {
-        Methods creator = new Methods();
-        driver = creator.createWebDriver("chrome");
+        creator = new Methods("chrome");
+        driver = creator.getDriver();
         driver.manage().window().maximize();
         driver.manage().timeouts().pageLoadTimeout(60, TimeUnit.SECONDS);
     }
@@ -43,35 +44,33 @@ public class StepDefinitions {
     @And("User enters an email {string}")
     public void user_enters_an_email(String email) {
         if (email.equals("randomMail")) {
-            Methods.sendKeys(driver, By.id("email"), Methods.randomMail());
+            creator.sendKeys(By.id("email"), creator.randomMail());
 
         } else if (email.equals("emptyMail")) {
-            Methods.sendKeys(driver, By.id("email"), " ");
+            creator.sendKeys(By.id("email"), " ");
         }
     }
 
     @And("User enters a username {string}")
     public void user_enters_a_username(String username) {
         if (username.equals("randomUsername")) {
-            Methods.sendKeys(driver, By.id("new_username"), Methods.randomName());
-        }
-        if (username.equals("longUsername")) {
-            Methods.sendKeys(driver, By.id("new_username"), Methods.longUserName());
+            creator.sendKeys(By.id("new_username"), creator.randomName());
+        } else if (username.equals("longUsername")) {
+            creator.sendKeys(By.id("new_username"), creator.longUserName());
 
-        }
-        if (username.equals("existingUsername")) {
-            Methods.sendKeys(driver, By.id("new_username"), "Paula123");
+        } else if (username.equals("existingUsername")) {
+            creator.sendKeys(By.id("new_username"), "Paula123");
         }
     }
 
     @And("User enters a password {string}")
     public void user_enters_a_password(String password) {
-        Methods.sendKeys(driver, By.id("new_password"), password);
+        creator.sendKeys(By.id("new_password"), password);
     }
 
     @Given("User accepts cookies")
     public void user_accepts_cookies() {
-        Methods.click(driver, By.id("onetrust-accept-btn-handler"));
+        creator.click(By.id("onetrust-accept-btn-handler"));
     }
 
     @Given("User scrolls down")
@@ -82,18 +81,16 @@ public class StepDefinitions {
 
     @When("User clicks on the signup button")
     public void user_clicks_on_the_signup_button() {
-        Methods.click(driver, By.id("create-account"));
+        creator.click(By.id("create-account"));
     }
 
     @Then("The output message {string} should be displayed")
     public void the_output_message_should_be_displayed(String outputMessage) {
+        // Checks if there is an error message displayed
         boolean isInValid = driver.findElements(By.className("invalid-error")).size() >= 1;
 
-        if (!isInValid) {
-            if (outputMessage.equals("Check your email")) {
-                assertEquals(outputMessage, driver.findElement(By.cssSelector("h1[class='!margin-bottom--lv3 no-transform center-on-medium']")).getText());
-            }
-
+        if (!isInValid && outputMessage.equals("Check your email")) {
+            assertEquals(outputMessage, driver.findElement(By.cssSelector("h1[class='!margin-bottom--lv3 no-transform center-on-medium']")).getText());
         } else {
             List<WebElement> list = driver.findElements(By.className("invalid-error"));
             if (list.size() >= 2) {
