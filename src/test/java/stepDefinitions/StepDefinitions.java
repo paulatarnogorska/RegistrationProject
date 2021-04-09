@@ -6,14 +6,13 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import org.junit.Assert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
@@ -23,17 +22,16 @@ public class StepDefinitions {
 
     @Before
     public void setup() {
-        System.setProperty("webdriver.chrome.driver",
-                "C:\\Users\\paula\\Documents\\MVT20\\Testautomation\\Selenium\\chromedriver.exe");
-        this.driver = new ChromeDriver();
-        this.driver.manage().window().maximize();
-        this.driver.manage().timeouts().pageLoadTimeout(60, TimeUnit.SECONDS);
+        Methods creator = new Methods();
+        driver = creator.createWebDriver("chrome");
+        driver.manage().window().maximize();
+        driver.manage().timeouts().pageLoadTimeout(60, TimeUnit.SECONDS);
     }
 
     @After
     public void tearDown() {
-        this.driver.manage().deleteAllCookies();
-        this.driver.quit();
+        driver.manage().deleteAllCookies();
+        driver.quit();
     }
 
 
@@ -43,43 +41,37 @@ public class StepDefinitions {
     }
 
     @And("User enters an email {string}")
-    public void user_enters_an_email(String email) throws InterruptedException {
-        WebElement mail = driver.findElement(By.id("email"));
+    public void user_enters_an_email(String email) {
         if (email.equals("randomMail")) {
-            mail.sendKeys(Methods.randomMail());
+            Methods.sendKeys(driver, By.id("email"), Methods.randomMail());
+
         } else if (email.equals("emptyMail")) {
-            mail.sendKeys(" ");
+            Methods.sendKeys(driver, By.id("email"), " ");
         }
     }
 
     @And("User enters a username {string}")
     public void user_enters_a_username(String username) {
-        WebElement name = driver.findElement(By.id("new_username"));
         if (username.equals("randomUsername")) {
-            name.sendKeys(Methods.randomName());
-        } else if (username.equals("longUsername")) {
-            name.sendKeys(Methods.longUserName());
-        } else if (username.equals("existingUsername")) {
-            name.sendKeys("Paula123");
+            Methods.sendKeys(driver, By.id("new_username"), Methods.randomName());
+        }
+        if (username.equals("longUsername")) {
+            Methods.sendKeys(driver, By.id("new_username"), Methods.longUserName());
+
+        }
+        if (username.equals("existingUsername")) {
+            Methods.sendKeys(driver, By.id("new_username"), "Paula123");
         }
     }
 
     @And("User enters a password {string}")
     public void user_enters_a_password(String password) {
-        WebElement newPassword = driver.findElement(By.id("new_password"));
-        newPassword.sendKeys(password);
-
+        Methods.sendKeys(driver, By.id("new_password"), password);
     }
 
     @Given("User accepts cookies")
     public void user_accepts_cookies() {
-        WebDriverWait wait = new WebDriverWait(driver, 10);
-        WebElement cookies = new WebDriverWait(driver, 10).
-                until(ExpectedConditions.presenceOfElementLocated(By.id("onetrust-accept-btn-handler")));
-
-        while (cookies.isDisplayed()) {
-            wait.until(ExpectedConditions.elementToBeClickable(cookies)).click();
-        }
+        Methods.click(driver, By.id("onetrust-accept-btn-handler"));
     }
 
     @Given("User scrolls down")
@@ -88,34 +80,27 @@ public class StepDefinitions {
         js.executeScript("window.scrollBy(0,1000)");
     }
 
-
     @When("User clicks on the signup button")
     public void user_clicks_on_the_signup_button() {
-        WebElement signup = new WebDriverWait(driver, 10).
-                until(ExpectedConditions.presenceOfElementLocated(By.id("create-account")));
-        signup.click();
+        Methods.click(driver, By.id("create-account"));
     }
 
     @Then("The output message {string} should be displayed")
     public void the_output_message_should_be_displayed(String outputMessage) {
+        boolean isInValid = driver.findElements(By.className("invalid-error")).size() >= 1;
 
-        String expected = "";
-        String actual = "";
+        if (!isInValid) {
+            if (outputMessage.equals("Check your email")) {
+                assertEquals(outputMessage, driver.findElement(By.cssSelector("h1[class='!margin-bottom--lv3 no-transform center-on-medium']")).getText());
+            }
 
-        if(outputMessage.equals("Check your email")) {
-            expected = "Check your email";
-            actual = driver.findElement(By.cssSelector("h1[class='!margin-bottom--lv3 no-transform center-on-medium']")).getText();
-        } else if(outputMessage.equals("longUsername")) {
-            expected = "Enter a value less than 100 characters long";
-            actual = driver.findElement(By.cssSelector("span[class='invalid-error']")).getText();
-        } else if (outputMessage.equals("existingUsername")) {
-            expected = "Another user with this username already exists. Maybe it's your evil twin. Spooky.";
-            actual = driver.findElement(By.cssSelector("span[class='invalid-error']")).getText();
-        } else if(outputMessage.equals("Please enter a value")) {
-            expected = "Please enter a value";
-            actual = driver.findElement(By.cssSelector("span[class='invalid-error']")).getText();
+        } else {
+            List<WebElement> list = driver.findElements(By.className("invalid-error"));
+            if (list.size() >= 2) {
+                Assert.fail();
+            } else {
+                assertEquals(list.get(0).getText(), outputMessage);
+            }
         }
-
-        assertEquals(expected, actual);
     }
 }
